@@ -277,3 +277,30 @@ class ImageMask(db.Model):
             'note': self.note,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
         }
+
+
+class ImageSeg(db.Model):
+    __tablename__ = 'image_seg'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='AI分割结果ID')
+    image_id = db.Column(db.Integer, db.ForeignKey('image.id', ondelete='CASCADE'), nullable=False, comment='影像ID')
+    creator_id = db.Column(db.Integer, db.ForeignKey('doctor.id', ondelete='CASCADE'), nullable=False, comment='创建者ID (医生)')
+    query = db.Column(db.Text, nullable=True, comment='分割查询')
+    reasoning = db.Column(db.Text, nullable=True, comment='分割推理')
+    oss_key = db.Column(db.String(255), nullable=False, unique=True, comment='分割结果OSS键')
+    created_at = db.Column(db.TIMESTAMP, default=datetime.now, comment='创建时间')
+
+    # 关系
+    image = db.relationship('Image', backref=db.backref('segs', lazy='dynamic', cascade='all, delete-orphan'))
+    creator = db.relationship('Doctor', backref=db.backref('created_segs', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'image_id': self.image_id,
+            'creator_id': self.creator_id,
+            'query': self.query,
+            'reasoning': self.reasoning,
+            'oss_key': self.oss_key,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
+        }

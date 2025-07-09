@@ -1,6 +1,6 @@
 import utils.jwtauth
 from flask import request, jsonify, Blueprint
-from models import db, Image, Patient, Office, Case, ImageBbox
+from models import db, Image, Patient, Office, Case, ImageBbox, ImageSeg
 from utils.oss import upload_to_oss, custom_endpoint
 import uuid
 import io
@@ -11,6 +11,8 @@ import nibabel as nib
 import numpy as np
 from PIL import Image as PilImage
 import tempfile
+import requests
+import re
 
 image_bp = Blueprint('image', __name__)
 
@@ -559,4 +561,126 @@ def update_annotation():
             
     else:
         return jsonify({'code': 400, 'message': '无效的anno_type'}), 400
+
+
+@image_bp.route('/api/image/seg', methods=['POST'])
+@utils.jwtauth.jwt_required
+def seg_image():
+    """
+    接收影像ID和查询词，调用AI服务进行分割，并存储结果。
+    """
+    creator_id = request.user_id
+    data = request.get_json()
+    if not data:
+        return jsonify({'code': 400, 'message': '请求体不能为空'}), 400
+
+    image_id = data.get('image_id')
+    query = data.get('query')
+
+    if not all([image_id, query]):
+        return jsonify({'code': 400, 'message': '缺少必要参数: image_id, query'}), 400
+
+    image = Image.query.get(image_id)
+    if not image:
+        return jsonify({'code': 404, 'message': '影像不存在'}), 404
+
+    if image.format != 'picture' or image.dim != '2D':
+        return jsonify({'code': 400, 'message': 'AI分割仅支持2D picture格式的影像'}), 400
+
+    try:
+        # 1. 从OSS获取影像文件
+        image_url = f"{custom_endpoint}/{image.oss_key}"
+        image_response = requests.get(image_url, timeout=10)
+        image_response.raise_for_status()
+        image_bytes = image_response.content
+        
+        # 从oss_key中提取文件名
+        filename = image.oss_key.split('/')[-1]
+
+        # 2. 调用外部AI预测服务
+        predict_url = 'http://localhost:6006/predict'
+        files = {'image': (filename, image_bytes, 'application/octet-stream')}
+        payload = {'query': query}
+        
+        try:
+            predict_response = requests.post(predict_url, files=files, data=payload, timeout=60)
+            predict_response.raise_for_status()
+            predict_data = predict_response.json()
+        except requests.exceptions.RequestException as e:
+            return jsonify({'code': 503, 'message': f'调用AI服务失败: {e}'}), 503
+
+        # 3. 将结果存入数据库
+        raw_reasoning = predict_data.get('result', '')
+        normalized_reasoning = raw_reasoning
+        if raw_reasoning:
+            # 规范化AI模型输出的文本，去除序号和括号间的空格，以匹配前端解析规则
+            normalized_reasoning = re.sub(r'(\d+)\.\s+【', r'\1.【', raw_reasoning)
+            
+        new_seg = ImageSeg(
+            image_id=image_id,
+            creator_id=creator_id,
+            query=query,
+            reasoning=normalized_reasoning,
+            oss_key=predict_data.get('oss_key')
+        )
+        db.session.add(new_seg)
+        db.session.commit()
+
+        return jsonify({'code': 201, 'message': '影像分割成功', 'data': new_seg.to_dict()}), 201
+
+    except requests.exceptions.HTTPError as e:
+        return jsonify({'code': 500, 'message': f'从OSS获取影像失败: {e}'}), 500
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'code': 500, 'message': f'处理请求时发生内部错误: {str(e)}'}), 500
+
+
+@image_bp.route('/api/image/seg/list', methods=['GET'])
+@utils.jwtauth.jwt_required
+def list_image_segs():
+    """
+    获取指定影像的所有AI分割记录，支持分页。
+    """
+    image_id = request.args.get('image_id', type=int)
+    if not image_id:
+        return jsonify({'code': 400, 'message': '缺少必要参数: image_id'}), 400
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    image = Image.query.get(image_id)
+    if not image:
+        return jsonify({'code': 404, 'message': '影像不存在'}), 404
+    
+    if image.format != 'picture' or image.dim != '2D':
+        return jsonify({'code': 400, 'message': '此接口仅支持查询2D picture格式影像的分割记录'}), 400
+    
+    try:
+        pagination = db.session.query(ImageSeg).filter_by(image_id=image_id) \
+            .order_by(ImageSeg.created_at.desc()) \
+            .paginate(page=page, per_page=per_page, error_out=False)
+        
+        segs = pagination.items
+        data = [seg.to_dict() for seg in segs]
+
+        return jsonify({
+            'code': 200,
+            'message': '查询成功',
+            'data': data,
+            'pagination': {
+                'page': pagination.page,
+                'per_page': pagination.per_page,
+                'total_pages': pagination.pages,
+                'total_items': pagination.total,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'code': 500, 'message': f'查询时发生内部错误: {str(e)}'}), 500
 

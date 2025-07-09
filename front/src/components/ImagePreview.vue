@@ -89,6 +89,14 @@
               <span class="slice-count">{{ currentSliceIndex + 1 }} / {{ slicePreviews.length }}</span>
             </div>
         </div>
+        
+        <!-- AI Segmentation Button -->
+        <div v-if="isSegReady" class="ai-seg-control">
+          <el-button @click="openSegDialog" type="primary" plain>
+            <el-icon><MagicStick /></el-icon>
+            AI智能分割
+          </el-button>
+        </div>
       </div>
 
       <!-- Information & Annotation Panel -->
@@ -126,18 +134,28 @@
         </div>
       </div>
     </div>
+    <AIReasonSeg 
+      v-if="currentImageIdForAnnotation"
+      :image-id="currentImageIdForAnnotation" 
+      v-model:visible="showSegDialog" 
+    />
   </div>
 </template>
 
 <script>
 import { getImagePreview, addAnnotation, getAnnotations, deleteAnnotation } from '@/api/image';
-import { Delete } from '@element-plus/icons-vue';
+import { Delete, MagicStick } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import AIReasonSeg from './AIReasonSeg.vue';
 
 const ANNO_COLORS = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFA1'];
 
 export default {
   name: 'ImagePreview',
+  components: {
+    AIReasonSeg,
+    MagicStick
+  },
   props: {
     imageId: {
       type: [Number, String],
@@ -175,6 +193,7 @@ export default {
       newAnnotation: null,
       isCanvasImageLoading: false,
       isSimpleImageLoading: false,
+      showSegDialog: false,
     };
   },
   computed: {
@@ -230,6 +249,12 @@ export default {
         }
       });
       return marks;
+    },
+    isSegReady() {
+      // AI Seg is ready if it's a 3D image (slices are pictures) or a 2D picture
+      if (this.dim === '3D') return true;
+      if (this.dim === '2D' && this.imageInfo && this.imageInfo.format === 'picture') return true;
+      return false;
     }
   },
   watch: {
@@ -278,6 +303,9 @@ export default {
     window.removeEventListener('resize', this.setKonvaSize);
   },
   methods: {
+    openSegDialog() {
+      this.showSegDialog = true;
+    },
     handleImageLoad() {
       this.isSimpleImageLoading = false;
     },
@@ -808,5 +836,9 @@ export default {
 
 .anno-note {
   flex-grow: 1;
+}
+
+.ai-seg-control {
+  margin-top: 15px;
 }
 </style>

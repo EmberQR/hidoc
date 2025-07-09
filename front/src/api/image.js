@@ -65,7 +65,7 @@ export function deleteAnnotation(data) {
     url: '/api/image/annotate',
     method: 'delete',
     data
-  })
+  });
 }
 
 export function updateAnnotation(data) {
@@ -73,5 +73,22 @@ export function updateAnnotation(data) {
     url: '/api/image/annotate',
     method: 'put',
     data
-  })
+  });
+}
+
+// AI分割相关
+export function addImageSeg(data) {
+  return request({
+    url: '/api/image/seg',
+    method: 'post',
+    data
+  });
+}
+
+export function getImageSegList(params) {
+  return request({
+    url: '/api/image/seg/list',
+    method: 'get',
+    params
+  });
 } 
