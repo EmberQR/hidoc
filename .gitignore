@@ -11,5 +11,5 @@ node_modules
 .vscode
 .git
 __pycache__
-前端aichat组件prompt.md
-oss.py
+front/前端aichat组件prompt.md
+server/utils/oss.py
