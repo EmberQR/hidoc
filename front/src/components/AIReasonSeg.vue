@@ -38,7 +38,14 @@
                         <el-tag size="small" :type="item.tagType">{{ item.title }}</el-tag>
                         <p>{{ item.content }}</p>
                     </div>
-                    <img :src="getResultImageUrl(seg.oss_key)" class="result-image" alt="分割结果图" />
+                    <el-image 
+                        :src="getResultImageUrl(seg.oss_key)" 
+                        :preview-src-list="[getResultImageUrl(seg.oss_key)]"
+                        class="result-image" 
+                        fit="contain"
+                        preview-teleported
+                        hide-on-click-modal
+                    />
                 </div>
               </el-collapse-item>
             </el-collapse>
@@ -93,7 +100,14 @@
                              <p class="reasoning-content">{{ item.content }}</p>
                         </div>
                     </div>
-                    <img :src="getResultImageUrl(selectedSeg.oss_key)" class="result-image" alt="分割结果" />
+                    <el-image 
+                        :src="getResultImageUrl(selectedSeg.oss_key)" 
+                        :preview-src-list="[getResultImageUrl(selectedSeg.oss_key)]"
+                        class="result-image" 
+                        fit="contain"
+                        preview-teleported
+                        hide-on-click-modal
+                    />
                 </div>
             </div>
         </el-card>
@@ -252,7 +266,7 @@ watch(() => props.visible, (newVal) => {
 }
 
 .history-panel {
-  flex: 1;
+  flex: 2;
   display: flex;
   flex-direction: column;
 }
@@ -262,7 +276,7 @@ watch(() => props.visible, (newVal) => {
 }
 
 .main-panel {
-  flex: 2;
+  flex: 3;
   display: flex;
   flex-direction: column;
   gap: 20px;

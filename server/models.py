@@ -304,3 +304,28 @@ class ImageSeg(db.Model):
             'oss_key': self.oss_key,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
         }
+
+
+class AiAdvice(db.Model):
+    __tablename__ = 'ai_advice'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='AI建议ID')
+    creator_id = db.Column(db.Integer, db.ForeignKey('doctor.id', ondelete='CASCADE'), nullable=False, comment='创建者ID (医生)')
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id', ondelete='CASCADE'), nullable=False, comment='病人ID')
+    disease = db.Column(db.Text, nullable=True, comment='疾病分析')
+    therapy = db.Column(db.Text, nullable=True, comment='治疗建议')
+    created_at = db.Column(db.TIMESTAMP, default=datetime.now, comment='创建时间')
+
+    # 关系
+    creator = db.relationship('Doctor', backref=db.backref('ai_advices', lazy='dynamic'))
+    patient = db.relationship('Patient', backref=db.backref('ai_advices', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'creator_id': self.creator_id,
+            'patient_id': self.patient_id,
+            'disease': self.disease,
+            'therapy': self.therapy,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
+        }

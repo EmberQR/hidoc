@@ -28,6 +28,11 @@
         </el-menu-item>
 
         <el-menu-item index="patient" @click="navigateTo('/patient')">
+          <el-icon><User /></el-icon>
+          <template #title>病人管理</template>
+        </el-menu-item>
+
+        <el-menu-item index="case" @click="navigateTo('/case')">
           <el-icon><DocumentAdd /></el-icon>
           <template #title>病历管理</template>
         </el-menu-item>
@@ -37,7 +42,7 @@
           <template #title>影像管理</template>
         </el-menu-item>
 
-        <el-menu-item index="statistics" @click="navigateTo('/statistics')">
+        <!-- <el-menu-item index="statistics" @click="navigateTo('/statistics')">
           <el-icon><TrendCharts /></el-icon>
           <template #title>统计分析</template>
         </el-menu-item>
@@ -45,7 +50,7 @@
         <el-menu-item index="settings" @click="navigateTo('/settings')">
           <el-icon><Setting /></el-icon>
           <template #title>系统设置</template>
-        </el-menu-item>
+        </el-menu-item> -->
       </el-menu>
     </el-scrollbar>
 
@@ -134,6 +139,7 @@ export default {
       
       if (path === '/') return 'dashboard'
       if (path.startsWith('/patient')) return 'patient'
+      if (path.startsWith('/case')) return 'case'
       if (path.startsWith('/statistics')) return 'statistics'
       if (path.startsWith('/settings')) return 'settings'
       if (path.startsWith('/image')) return 'image'

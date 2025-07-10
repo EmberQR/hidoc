@@ -71,3 +71,11 @@ export function searchPatients(params) {
     params
   })
 }
+
+export function getCaseById(case_id) {
+    return request({
+        url: '/api/hospital/case/single',
+        method: 'get',
+        params: { case_id }
+    })
+}

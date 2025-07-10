@@ -90,9 +90,13 @@
             </div>
         </div>
         
-        <!-- AI Segmentation Button -->
-        <div v-if="isSegReady" class="ai-seg-control">
-          <el-button @click="openSegDialog" type="primary" plain>
+        <!-- Action Buttons -->
+        <div class="action-controls">
+          <el-button v-if="imageInfo" @click="handleEditNote" type="info" plain>
+            <el-icon><Edit /></el-icon>
+            编辑备注
+          </el-button>
+          <el-button v-if="isSegReady" @click="openSegDialog" type="primary" plain>
             <el-icon><MagicStick /></el-icon>
             AI智能分割
           </el-button>
@@ -143,8 +147,8 @@
 </template>
 
 <script>
-import { getImagePreview, addAnnotation, getAnnotations, deleteAnnotation } from '@/api/image';
-import { Delete, MagicStick } from '@element-plus/icons-vue';
+import { getImagePreview, addAnnotation, getAnnotations, deleteAnnotation, updateImage } from '@/api/image';
+import { Delete, MagicStick, Edit } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import AIReasonSeg from './AIReasonSeg.vue';
 
@@ -154,7 +158,8 @@ export default {
   name: 'ImagePreview',
   components: {
     AIReasonSeg,
-    MagicStick
+    MagicStick,
+    Edit
   },
   props: {
     imageId: {
@@ -303,6 +308,34 @@ export default {
     window.removeEventListener('resize', this.setKonvaSize);
   },
   methods: {
+    async handleEditNote() {
+      if (!this.imageInfo) return;
+
+      try {
+        const { value } = await ElMessageBox.prompt('请输入新的备注信息', '编辑备注', {
+          confirmButtonText: '保存',
+          cancelButtonText: '取消',
+          inputValue: this.imageInfo.note || '',
+          inputType: 'textarea',
+        });
+
+        const res = await updateImage(this.imageInfo.id, { note: value });
+
+        if (res.code === 200) {
+          ElMessage.success('备注更新成功');
+          this.imageInfo.note = value;
+        } else {
+          ElMessage.error(res.message || '更新失败');
+        }
+      } catch (error) {
+        if (error === 'cancel') {
+          ElMessage.info('已取消编辑');
+        } else {
+          console.error('更新备注失败:', error);
+          ElMessage.error('更新备注失败，请稍后重试');
+        }
+      }
+    },
     openSegDialog() {
       this.showSegDialog = true;
     },
@@ -836,6 +869,12 @@ export default {
 
 .anno-note {
   flex-grow: 1;
+}
+
+.action-controls {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
 }
 
 .ai-seg-control {

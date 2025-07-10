@@ -2,110 +2,84 @@
   <div class="home-container">
     <div class="welcome-banner">
       <div class="banner-content">
-        <h1 class="welcome-title">欢迎使用 HiDoc 智能预诊系统</h1>
-        <p class="welcome-subtitle">高效智能的诊断辅助工具，为您的诊断提供专业支持</p>
+        <h1 class="welcome-title">欢迎使用 HiDoc 智能影像辅诊系统</h1>
+        <p class="welcome-subtitle">AI集成的高效智能诊断辅助工具，为您的诊断提供专业支持</p>
       </div>
     </div>
     
     <div class="dashboard-container">
       <el-row :gutter="20">
+        <!-- 病历总数 -->
         <el-col :xs="24" :sm="12" :md="6">
           <el-card shadow="hover" class="dashboard-card">
             <template #header>
               <div class="card-header">
-                <span>今日预诊</span>
-                <el-button class="card-button" text>查看详情</el-button>
+                <span>病历总数</span>
+                <el-button class="card-button" text @click="$router.push('/case')">查看详情</el-button>
               </div>
             </template>
             <div class="card-content">
-              <div class="statistics-value">8</div>
-              <div class="statistics-label">较昨日 <span class="statistics-change increase">+2</span></div>
+              <div class="statistics-value">{{ dashboardData.total_cases }}</div>
+              <div class="statistics-label">今日 <span class="statistics-change increase">+{{ dashboardData.today_cases }}</span></div>
             </div>
           </el-card>
         </el-col>
+        <!-- 共接待病人 -->
         <el-col :xs="24" :sm="12" :md="6">
           <el-card shadow="hover" class="dashboard-card">
             <template #header>
               <div class="card-header">
-                <span>患者总数</span>
-                <el-button class="card-button" text>查看详情</el-button>
+                <span>共接待病人</span>
+                <el-button class="card-button" text @click="$router.push('/patient')">查看详情</el-button>
               </div>
             </template>
             <div class="card-content">
-              <div class="statistics-value">127</div>
-              <div class="statistics-label">本周新增 <span class="statistics-change increase">+14</span></div>
+              <div class="statistics-value">{{ dashboardData.total_patients }}<span class="unit">人</span></div>
+              <div class="statistics-label">&nbsp;</div>
             </div>
           </el-card>
         </el-col>
+        <!-- 调用AI影像分割 -->
         <el-col :xs="24" :sm="12" :md="6">
           <el-card shadow="hover" class="dashboard-card">
             <template #header>
               <div class="card-header">
-                <span>诊断准确率</span>
-                <el-button class="card-button" text>查看详情</el-button>
+                <span>AI影像分割</span>
+                <el-button class="card-button" text @click="$router.push('/image')">查看详情</el-button>
               </div>
             </template>
             <div class="card-content">
-              <div class="statistics-value">92.5%</div>
-              <div class="statistics-label">较上月 <span class="statistics-change increase">+1.2%</span></div>
+              <div class="statistics-value">{{ dashboardData.ai_seg }}<span class="unit">次</span></div>
+              <div class="statistics-label">今日 <span class="statistics-change increase">+{{ dashboardData.today_ai_seg }}</span></div>
             </div>
           </el-card>
         </el-col>
+        <!-- 获取AI辅诊建议 -->
         <el-col :xs="24" :sm="12" :md="6">
           <el-card shadow="hover" class="dashboard-card">
             <template #header>
               <div class="card-header">
-                <span>平均诊断时间</span>
-                <el-button class="card-button" text>查看详情</el-button>
+                <span>AI辅诊建议</span>
+                <el-button class="card-button" text @click="$router.push('/patient')">查看详情</el-button>
               </div>
             </template>
             <div class="card-content">
-              <div class="statistics-value">3.5<span class="unit">分钟</span></div>
-              <div class="statistics-label">较上月 <span class="statistics-change decrease">-0.8分钟</span></div>
+              <div class="statistics-value">{{ dashboardData.ai_advice }}<span class="unit">次</span></div>
+              <div class="statistics-label">今日 <span class="statistics-change increase">+{{ dashboardData.today_ai_advice }}</span></div>
             </div>
           </el-card>
         </el-col>
       </el-row>
       
       <el-row :gutter="20" class="mt-20">
-        <el-col :xs="24" :md="16">
+        <el-col :span="24">
           <el-card shadow="hover" class="chart-card">
             <template #header>
               <div class="card-header">
-                <span>近7天诊断趋势</span>
-                <el-radio-group v-model="timeRange" size="small">
-                  <el-radio-button label="week">近7天</el-radio-button>
-                  <el-radio-button label="month">近30天</el-radio-button>
-                </el-radio-group>
+                <span>近7天病历数</span>
               </div>
             </template>
-            <div class="chart-container">
-              <div class="chart-placeholder">
-                [此处将显示趋势图表]
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :xs="24" :md="8">
-          <el-card shadow="hover" class="quick-actions">
-            <template #header>
-              <div class="card-header">
-                <span>快捷操作</span>
-              </div>
-            </template>
-            <div class="action-list">
-              <el-button type="primary" class="action-button" @click="$router.push('/diagnosis/new')">
-                <el-icon><Plus /></el-icon>新建诊断
-              </el-button>
-              <el-button type="success" class="action-button" @click="$router.push('/patients/add')">
-                <el-icon><Plus /></el-icon>添加患者
-              </el-button>
-              <el-button type="info" class="action-button" @click="$router.push('/knowledge')">
-                <el-icon><Reading /></el-icon>浏览知识库
-              </el-button>
-              <el-button type="warning" class="action-button" @click="$router.push('/statistics')">
-                <el-icon><TrendCharts /></el-icon>查看统计数据
-              </el-button>
+            <div class="chart-container" ref="chartContainer">
             </div>
           </el-card>
         </el-col>
@@ -114,25 +88,126 @@
   </div>
 </template>
 
-<script>
-import { ref } from 'vue'
-import { Plus, Reading, TrendCharts } from '@element-plus/icons-vue'
+<script setup>
+import { ref, onMounted, reactive, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+// 按需引入 ECharts
+import * as echarts from 'echarts/core';
+import { TooltipComponent, GridComponent, AxisPointerComponent } from 'echarts/components';
+import { LineChart } from 'echarts/charts';
+import { CanvasRenderer } from 'echarts/renderers';
+import { getHomeData } from '@/api/home';
+import { ElMessage } from 'element-plus';
 
-export default {
-  name: 'HomeView',
-  components: {
-    Plus,
-    Reading,
-    TrendCharts
-  },
-  setup() {
-    const timeRange = ref('week')
-    
-    return {
-      timeRange
-    }
+// 注册 ECharts 组件
+echarts.use([
+  TooltipComponent,
+  GridComponent,
+  AxisPointerComponent,
+  LineChart,
+  CanvasRenderer
+]);
+
+const router = useRouter();
+const chartContainer = ref(null);
+let myChart = null;
+
+const dashboardData = reactive({
+  total_cases: 0,
+  today_cases: 0,
+  total_patients: 0,
+  ai_seg: 0,
+  today_ai_seg: 0,
+  ai_advice: 0,
+  today_ai_advice: 0,
+  recent_cases: []
+});
+
+const fetchData = async () => {
+  const hospitalInfo = localStorage.getItem('currentHospital');
+  if (!hospitalInfo) {
+    ElMessage.error('无法获取当前医院信息，请重新选择医院');
+    return;
   }
-}
+  
+  try {
+    const hospital = JSON.parse(hospitalInfo);
+    const response = await getHomeData(hospital.id);
+    if (response.code === 200) {
+      Object.assign(dashboardData, response.data);
+      nextTick(() => {
+        initChart();
+      });
+    } else {
+      ElMessage.error(response.message || '获取首页数据失败');
+    }
+  } catch (error) {
+    console.error("获取首页数据或解析医院信息失败:", error);
+    ElMessage.error('加载数据时出错，请稍后再试');
+  }
+};
+
+const initChart = () => {
+  if (chartContainer.value) {
+    // 销毁之前的实例，防止热更新或重复渲染时出错
+    if (myChart) {
+      myChart.dispose();
+    }
+    myChart = echarts.init(chartContainer.value);
+    const options = {
+      tooltip: {
+        trigger: 'axis'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dashboardData.recent_cases.map(item => item.日期)
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [
+        {
+          name: '病历数',
+          type: 'line',
+          stack: '总量',
+          areaStyle: {},
+          emphasis: {
+            focus: 'series'
+          },
+          data: dashboardData.recent_cases.map(item => item.数量),
+          smooth: true,
+          itemStyle: {
+            color: '#409EFF'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(64, 158, 255, 0.5)' },
+              { offset: 1, color: 'rgba(64, 158, 255, 0.1)' }
+            ])
+          }
+        }
+      ]
+    };
+    myChart.setOption(options);
+  }
+};
+
+onMounted(() => {
+  fetchData();
+  window.addEventListener('resize', () => {
+    if (myChart) {
+      myChart.resize();
+    }
+  });
+});
+
 </script>
 
 <style scoped>
@@ -222,6 +297,7 @@ export default {
 .statistics-label {
   font-size: 14px;
   color: #909399;
+  height: 16px; /* 保证高度一致 */
 }
 
 .statistics-change {
@@ -237,43 +313,17 @@ export default {
 }
 
 .chart-card {
-  height: 350px;
+  height: 400px; /* 增加高度以容纳图表 */
   margin-bottom: 20px;
 }
 
 .chart-container {
-  height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-placeholder {
-  color: #909399;
-  font-size: 16px;
-  text-align: center;
-}
-
-.quick-actions {
-  height: 350px;
-  margin-bottom: 20px;
-}
-
-.action-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  padding: 10px 0;
-}
-
-.action-button {
+  height: 320px; /* 设置一个明确的高度，避免因父容器高度计算延迟导致初始化失败 */
   width: 100%;
-  height: 50px;
-  font-size: 16px;
 }
 
 .mt-20 {
-  margin-top: 20px;
+  margin-top: 5px;
 }
 
 @media (max-width: 768px) {
@@ -285,12 +335,8 @@ export default {
     font-size: 14px;
   }
   
-  .chart-card, .quick-actions {
-    height: auto;
-  }
-  
-  .chart-container {
-    height: 200px;
+  .chart-card {
+    height: 300px;
   }
 }
 </style>

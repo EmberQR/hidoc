@@ -398,6 +398,78 @@ def update_case():
 
     return jsonify({'code': 200, 'message': '病历更新成功', 'data': case.to_dict()})
 
+@hospital_bp.route('/api/hospital/case/single', methods=['GET'])
+@utils.jwtauth.jwt_required
+def get_single_case():
+    """
+    根据病历ID获取单个病历的详细信息，包括其关联的所有影像
+    """
+    case_id = request.args.get('case_id')
+    if not case_id:
+        return jsonify({'code': 400, 'message': '缺少 case_id 参数'}), 400
+
+    try:
+        case_id = int(case_id)
+    except ValueError:
+        return jsonify({'code': 400, 'message': 'case_id 必须是整数'}), 400
+
+    case = Case.query.get(case_id)
+    if not case:
+        return jsonify({'code': 404, 'message': '病历不存在'}), 404
+
+    # 获取病历关联的影像
+    images_by_case_id = {}
+    main_images = db.session.query(Image).filter(
+        Image.case_id == case_id,
+        Image.parent_image_id.is_(None)
+    ).all()
+
+    main_image_ids = [img.id for img in main_images]
+    previews_by_parent_id = {}
+
+    if main_image_ids:
+        all_child_images = db.session.query(Image).filter(
+            Image.parent_image_id.in_(main_image_ids)
+        ).order_by(Image.parent_image_id, Image.id.asc()).all()
+
+        for child in all_child_images:
+            if child.parent_image_id not in previews_by_parent_id:
+                previews_by_parent_id[child.parent_image_id] = child
+
+    image_list = []
+    base_url = "https://cdn.ember.ac.cn"
+    for img in main_images:
+        preview_url = f"{base_url}/{img.oss_key}"
+
+        if img.format in ['dicom', 'nii']:
+            preview_image = previews_by_parent_id.get(img.id)
+            if preview_image:
+                preview_url = f"{base_url}/{preview_image.oss_key}"
+
+        image_info = {
+            'image_id': img.id,
+            'name': img.name,
+            'preview_url': preview_url,
+            'dim': img.dim,
+            'format': img.format,
+            'type': img.type,
+            'note': img.note
+        }
+        image_list.append(image_info)
+    
+    # 格式化返回数据
+    case_data = case.to_dict()
+    case_data['patient_name'] = case.patient.name
+    case_data['doctor_name'] = case.doctor.name
+    case_data['office_name'] = case.office.name
+    case_data['images'] = image_list
+
+    return jsonify({
+        'code': 200,
+        'message': '查询成功',
+        'data': case_data
+    })
+
 # 根据姓名搜索病人
 @hospital_bp.route('/api/hospital/patient', methods=['GET'])
 @utils.jwtauth.jwt_required

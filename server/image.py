@@ -370,40 +370,62 @@ def delete_image(image_id):
 @utils.jwtauth.jwt_required
 def list_images():
     """
-    获取当前医生创建的所有影像列表 (仅父影像)
+    获取当前医生创建的所有影像列表 (仅父影像)，支持分页。
     """
     creator_id = request.user_id
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
     
-    # 只查询 parent_image_id 为 NULL 的顶层影像
-    images = Image.query.filter_by(creator_id=creator_id, parent_image_id=None).order_by(Image.created_at.desc()).all()
-    
-    results = []
-    base_url = "https://cdn.ember.ac.cn"
-
-    for image in images:
-        image_data = image.to_dict()
-        source_url = f"{base_url}/{image.oss_key}"
-        preview_url = source_url  # 默认预览URL为源URL
-
-        # 1. 对于2D picture类型，使用源URL作为预览 (默认行为)
+    try:
+        # 只查询 parent_image_id 为 NULL 的顶层影像，并进行分页
+        pagination = Image.query.filter_by(creator_id=creator_id, parent_image_id=None) \
+            .order_by(Image.created_at.desc()) \
+            .paginate(page=page, per_page=per_page, error_out=False)
         
-        # 2. 对于2D dicom/nii, 查找其子预览影像
-        if image.dim == '2D' and image.format in ['dicom', 'nii']:
-            preview_image = Image.query.filter_by(parent_image_id=image.id).first()
-            if preview_image:
-                preview_url = f"{base_url}/{preview_image.oss_key}"
-        
-        # 3. 对于3D dicom/nii, 查找第一个切片作为预览
-        elif image.dim == '3D':
-            first_slice = Image.query.filter_by(parent_image_id=image.id).order_by(Image.id.asc()).first()
-            if first_slice:
-                preview_url = f"{base_url}/{first_slice.oss_key}"
+        images = pagination.items
+        results = []
+        base_url = custom_endpoint
 
-        image_data['source_url'] = source_url
-        image_data['preview_url'] = preview_url
-        results.append(image_data)
-        
-    return jsonify({'code': 200, 'message': '查询成功', 'data': results})
+        for image in images:
+            image_data = image.to_dict()
+            source_url = f"{base_url}/{image.oss_key}"
+            preview_url = source_url  # 默认预览URL为源URL
+
+            # 1. 对于2D picture类型，使用源URL作为预览 (默认行为)
+            
+            # 2. 对于2D dicom/nii, 查找其子预览影像
+            if image.dim == '2D' and image.format in ['dicom', 'nii']:
+                preview_image = Image.query.filter_by(parent_image_id=image.id).first()
+                if preview_image:
+                    preview_url = f"{base_url}/{preview_image.oss_key}"
+            
+            # 3. 对于3D dicom/nii, 查找第一个切片作为预览
+            elif image.dim == '3D':
+                first_slice = Image.query.filter_by(parent_image_id=image.id).order_by(Image.id.asc()).first()
+                if first_slice:
+                    preview_url = f"{base_url}/{first_slice.oss_key}"
+
+            image_data['source_url'] = source_url
+            image_data['preview_url'] = preview_url
+            results.append(image_data)
+            
+        return jsonify({
+            'code': 200,
+            'message': '查询成功',
+            'data': results,
+            'pagination': {
+                'page': pagination.page,
+                'per_page': pagination.per_page,
+                'total_pages': pagination.pages,
+                'total_items': pagination.total,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'code': 500, 'message': f'查询时发生内部错误: {str(e)}'}), 500
 
 
 @image_bp.route('/api/image/annotate', methods=['POST'])

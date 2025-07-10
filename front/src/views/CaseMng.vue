@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <h1 class="page-title">病历管理</h1>
-      <p class="page-description">在这里管理、查询和创建病历</p>
+      <p class="page-description">在这里管理、查询和创建病历。默认显示所有医生创建的病历。</p>
     </div>
 
     <!-- 搜索和操作栏 -->
@@ -37,7 +37,13 @@
     <el-card class="case-table-card" shadow="never">
        <el-table :data="caseList" v-loading="loading" style="width: 100%">
         <el-table-column prop="case_date" label="就诊日期" width="120" />
-        <el-table-column prop="patient_name" label="病人姓名" width="100" />
+        <el-table-column prop="patient_name" label="病人姓名" width="120">
+          <template #default="scope">
+            <el-button link type="primary" @click="showPatientInfo(scope.row.patient_id)">
+              {{ scope.row.patient_name }}
+            </el-button>
+          </template>
+        </el-table-column>
         <el-table-column prop="doctor_name" label="主治医生" width="100" />
         <el-table-column prop="office_name" label="所属科室" width="150" />
         <el-table-column prop="chief_complaint" label="主诉" show-overflow-tooltip />
@@ -54,9 +60,10 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
-            <el-button size="small" type="primary" :icon="Edit" @click="handleEditCase(scope.row)">编辑</el-button>
+            <el-button size="small" type="primary" :icon="View" @click="handleViewCase(scope.row)">查看</el-button>
+            <el-button size="small" :icon="Edit" @click="handleEditCase(scope.row)">编辑</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -82,10 +89,17 @@
             <el-form-item label="病人" prop="patient_id">
               <el-select v-model="caseForm.patient_id" filterable remote :remote-method="searchPatients" placeholder="搜索并选择病人" style="width: 100%;">
                 <el-option v-for="item in patientOptions" :key="item.id" :label="item.name" :value="item.id">
-                  <span>{{ item.name }}</span>
-                  <span style="font-size: 13px; color: #909399; margin-left: 8px;">
-                    ({{ item.gender }}{{ calculateAge(item.birthday) ? `，${calculateAge(item.birthday)}` : '' }})
-                  </span>
+                  <div class="patient-option">
+                    <div class="patient-option-info">
+                      <span>{{ item.name }}</span>
+                      <span class="patient-option-meta">
+                        ({{ item.gender }}{{ calculateAge(item.birthday) ? `，${calculateAge(item.birthday)}` : '' }})
+                      </span>
+                    </div>
+                    <el-button link type="primary" size="small" @click.stop="showPatientInfo(item.id)">
+                      查看详情
+                    </el-button>
+                  </div>
                 </el-option>
               </el-select>
             </el-form-item>
@@ -216,17 +230,32 @@
     <el-dialog v-model="imagePreviewDialogVisible" title="影像预览与标注" width="85%" top="5vh" destroy-on-close>
       <ImagePreview v-if="imagePreviewDialogVisible && selectedImageId" :image-id="selectedImageId" />
     </el-dialog>
+
+    <!-- 病历详情预览弹窗 -->
+    <el-dialog v-model="casePreviewDialogVisible" title="病历详情" width="85%" top="5vh" destroy-on-close>
+      <CasePreview 
+        v-if="casePreviewDialogVisible && selectedCaseIdForPreview" 
+        :case-id="selectedCaseIdForPreview"
+        @view-patient="handleViewPatientFromPreview" />
+    </el-dialog>
+
+    <!-- 病人详情预览弹窗 -->
+    <el-dialog v-model="patientInfoDialogVisible" title="病人综合信息" width="90%" top="5vh" destroy-on-close>
+      <PatientInfo v-if="patientInfoDialogVisible && selectedPatientIdForInfo" :patient-id="selectedPatientIdForInfo" />
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, genFileId } from 'element-plus';
-import { Search, Edit, User, DocumentAdd, Plus } from '@element-plus/icons-vue';
+import { Search, Edit, User, DocumentAdd, Plus, View } from '@element-plus/icons-vue';
 import { getOffices, getCases, addPatient, addCase, updateCase, searchPatients as searchPatientsApi } from '@/api/hospital';
 import { addImage } from '@/api/image';
 import { getCurrentHospital } from '@/utils/auth';
 import ImagePreview from '@/components/ImagePreview.vue';
+import CasePreview from '@/components/CasePreview.vue';
+import PatientInfo from '@/components/PatientInfo.vue';
 
 // --- 响应式状态定义 ---
 
@@ -299,6 +328,14 @@ const addImageFormRules = {
   type: [{ required: true, message: '请选择影像类型', trigger: 'change' }],
   file: [{ required: true, message: '请选择一个文件', trigger: 'change' }],
 };
+
+// 病历预览弹窗
+const casePreviewDialogVisible = ref(false);
+const selectedCaseIdForPreview = ref(null);
+
+// 病人详情弹窗
+const patientInfoDialogVisible = ref(false);
+const selectedPatientIdForInfo = ref(null);
 
 // --- 数据获取与处理 ---
 
@@ -435,6 +472,21 @@ const submitCase = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+
+const handleViewCase = (row) => {
+  selectedCaseIdForPreview.value = row.id;
+  casePreviewDialogVisible.value = true;
+};
+
+const showPatientInfo = (patientId) => {
+  selectedPatientIdForInfo.value = patientId;
+  patientInfoDialogVisible.value = true;
+};
+
+const handleViewPatientFromPreview = (patientId) => {
+  casePreviewDialogVisible.value = false;
+  showPatientInfo(patientId);
 };
 
 // --- 影像相关事件处理 ---
@@ -647,5 +699,21 @@ onMounted(() => {
   font-size: 18px;
   color: #303133;
   margin: 0;
+}
+
+.patient-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.patient-option-info {
+  display: flex;
+  align-items: center;
+}
+.patient-option-meta {
+  font-size: 13px;
+  color: #909399;
+  margin-left: 8px;
 }
 </style>

@@ -1,10 +1,11 @@
 import request from '@/utils/request'
 
 // 获取当前医生创建的所有影像列表
-export function listImages() {
+export function listImages(params) {
     return request({
         url: '/api/image/list',
-        method: 'get'
+        method: 'get',
+        params
     })
 }
 

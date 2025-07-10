@@ -23,8 +23,9 @@
       <el-table-column prop="dim" label="维度" width="80" />
       <el-table-column prop="note" label="备注" show-overflow-tooltip />
       <el-table-column prop="created_at" label="上传时间" width="180" sortable />
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column label="操作" width="360" fixed="right">
         <template #default="scope">
+          <el-button v-if="scope.row.case_id" size="small" type="primary" @click="handleViewCase(scope.row)">查看关联病历</el-button>
           <el-button size="small" type="success" @click="handlePreview(scope.row)">预览/标注</el-button>
           <el-button size="small" @click="handleEdit(scope.row)">编辑备注</el-button>
           <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
@@ -32,9 +33,35 @@
       </el-table-column>
     </el-table>
 
+    <div class="pagination-container">
+      <el-pagination
+        v-if="pagination.total_items > 0"
+        background
+        layout="prev, pager, next, jumper, ->, total"
+        :total="pagination.total_items"
+        :current-page="pagination.page"
+        :page-size="pagination.per_page"
+        @current-change="handlePageChange"
+      />
+    </div>
+
     <!-- 预览/标注 Dialog -->
     <el-dialog v-model="previewDialogVisible" title="影像预览与标注" width="85%" top="5vh" destroy-on-close>
       <ImagePreview v-if="previewDialogVisible && currentImage" :image-id="currentImage.id" />
+    </el-dialog>
+
+    <!-- 关联病历详情 Dialog -->
+    <el-dialog v-model="casePreviewDialogVisible" title="关联病历详情" width="85%" top="5vh" destroy-on-close>
+      <CasePreview 
+        v-if="casePreviewDialogVisible && selectedCaseId" 
+        :case-id="selectedCaseId"
+        @view-patient="handleViewPatientFromPreview"
+      />
+    </el-dialog>
+
+    <!-- 病人信息 Dialog -->
+    <el-dialog v-model="patientInfoDialogVisible" title="病人综合信息" width="90%" top="5vh" destroy-on-close>
+      <PatientInfo v-if="patientInfoDialogVisible && selectedPatientId" :patient-id="selectedPatientId" />
     </el-dialog>
 
     <!-- 编辑备注 Dialog -->
@@ -100,6 +127,8 @@
 import { ref, onMounted, reactive } from 'vue';
 import { listImages, deleteImage, updateImage, addImage } from '@/api/image';
 import ImagePreview from '@/components/ImagePreview.vue';
+import CasePreview from '@/components/CasePreview.vue';
+import PatientInfo from '@/components/PatientInfo.vue';
 import { ElMessage, ElMessageBox, genFileId } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue'
 
@@ -107,11 +136,21 @@ const imageList = ref([]);
 const loading = ref(false);
 const uploading = ref(false);
 
+const pagination = ref({
+  page: 1,
+  per_page: 10,
+  total_items: 0,
+});
+
 const previewDialogVisible = ref(false);
 const editDialogVisible = ref(false);
 const addDialogVisible = ref(false);
+const casePreviewDialogVisible = ref(false);
+const patientInfoDialogVisible = ref(false);
 
 const currentImage = ref(null);
+const selectedCaseId = ref(null);
+const selectedPatientId = ref(null);
 const addFormRef = ref(null);
 const uploadRef = ref(null);
 
@@ -133,12 +172,13 @@ const addFormRules = {
   file: [{ required: true, message: '请选择一个文件', trigger: 'change' }],
 };
 
-const fetchImages = async () => {
+const fetchImages = async (page = 1) => {
   loading.value = true;
   try {
-    const res = await listImages();
+    const res = await listImages({ page, per_page: pagination.value.per_page });
     if (res.code === 200) {
       imageList.value = res.data;
+      pagination.value = res.pagination;
     } else {
       ElMessage.error(res.message || '获取影像列表失败');
     }
@@ -150,10 +190,25 @@ const fetchImages = async () => {
   }
 };
 
+const handlePageChange = (newPage) => {
+  fetchImages(newPage);
+};
+
 onMounted(fetchImages);
 
 const handleAdd = () => {
   addDialogVisible.value = true;
+};
+
+const handleViewCase = (row) => {
+  selectedCaseId.value = row.case_id;
+  casePreviewDialogVisible.value = true;
+};
+
+const handleViewPatientFromPreview = (patientId) => {
+  casePreviewDialogVisible.value = false;
+  selectedPatientId.value = patientId;
+  patientInfoDialogVisible.value = true;
 };
 
 const handlePreview = (row) => {
@@ -284,5 +339,10 @@ const submitAdd = () => {
 }
 .el-table {
     border-radius: 4px;
+}
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 </style>

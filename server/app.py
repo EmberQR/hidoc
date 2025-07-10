@@ -9,6 +9,8 @@ from hospital import hospital_bp
 from utils.oss import upload_to_oss
 from werkzeug.utils import secure_filename
 from image import image_bp
+from patient import patient_bp
+from home import home_bp
 import os
 
 app = flask.Flask(__name__)
@@ -23,6 +25,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(hospital_bp)
 app.register_blueprint(image_bp)
+app.register_blueprint(patient_bp)
+app.register_blueprint(home_bp)
 
 # 创建数据库表
 def create_tables():

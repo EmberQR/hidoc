@@ -25,6 +25,12 @@ const routes = [
       {
         path: '/patient',
         name: 'patient',
+        component: () => import('@/views/PatientMng.vue'),
+        meta: { title: '病人管理', icon: 'user-filled' }
+      },
+      {
+        path: '/case',
+        name: 'case',
         component: () => import('@/views/CaseMng.vue'),
         meta: { title: '病历管理', icon: 'document-add' }
       },
