@@ -109,7 +109,7 @@
         <ul>
           <li><strong>名称:</strong> {{ imageInfo.name }}</li>
           <li><strong>类型:</strong> {{ imageInfo.type }}</li>
-          <li><strong>格式:</strong> {{ imageInfo.format }}</li>
+          <li><strong>格式:</strong> {{ imageInfo.format == 'picture' ? '图片' : imageInfo.format }}</li>
           <li><strong>维度:</strong> {{ imageInfo.dim }}</li>
           <li v-if="dim === '3D'">
             <strong>尺寸:</strong> 

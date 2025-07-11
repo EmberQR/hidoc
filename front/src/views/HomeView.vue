@@ -20,7 +20,7 @@
             </template>
             <div class="card-content">
               <div class="statistics-value">{{ dashboardData.total_cases }}</div>
-              <div class="statistics-label">今日 <span class="statistics-change increase">+{{ dashboardData.today_cases }}</span></div>
+              <div class="statistics-label">今日 <span class="statistics-change increase">{{ dashboardData.today_cases > 0 ? '+' : '' }}{{ dashboardData.today_cases }}</span></div>
             </div>
           </el-card>
         </el-col>
@@ -50,7 +50,7 @@
             </template>
             <div class="card-content">
               <div class="statistics-value">{{ dashboardData.ai_seg }}<span class="unit">次</span></div>
-              <div class="statistics-label">今日 <span class="statistics-change increase">+{{ dashboardData.today_ai_seg }}</span></div>
+              <div class="statistics-label">今日 <span class="statistics-change increase">{{ dashboardData.today_ai_seg > 0 ? '+' : '' }}{{ dashboardData.today_ai_seg }}</span></div>
             </div>
           </el-card>
         </el-col>
@@ -65,7 +65,7 @@
             </template>
             <div class="card-content">
               <div class="statistics-value">{{ dashboardData.ai_advice }}<span class="unit">次</span></div>
-              <div class="statistics-label">今日 <span class="statistics-change increase">+{{ dashboardData.today_ai_advice }}</span></div>
+              <div class="statistics-label">今日 <span class="statistics-change increase">{{ dashboardData.today_ai_advice > 0 ? '+' : '' }}{{ dashboardData.today_ai_advice }}</span></div>
             </div>
           </el-card>
         </el-col>
@@ -76,7 +76,7 @@
           <el-card shadow="hover" class="chart-card">
             <template #header>
               <div class="card-header">
-                <span>近7天病历数</span>
+                <span>近7天我的病历数</span>
               </div>
             </template>
             <div class="chart-container" ref="chartContainer">

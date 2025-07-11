@@ -40,16 +40,14 @@ def get_home_data():
         Office.hospital_id == hospital_id
     ).scalar()
 
-    # 4. ai_seg: 医生在指定医院创建的总AI影像分割记录数
-    ai_seg = db.session.query(func.count(ImageSeg.id)).join(Image, ImageSeg.image_id == Image.id).join(Office, Image.office_id == Office.id).filter(
-        ImageSeg.creator_id == doctor_id,
-        Office.hospital_id == hospital_id
+    # 4. ai_seg: 医生创建的总AI影像分割记录数（不按医院筛选）
+    ai_seg = db.session.query(func.count(ImageSeg.id)).join(Image, ImageSeg.image_id == Image.id).filter(
+        ImageSeg.creator_id == doctor_id
     ).scalar()
 
-    # 5. today_ai_seg: 医生今天在指定医院创建的AI影像分割记录数
-    today_ai_seg = db.session.query(func.count(ImageSeg.id)).join(Image, ImageSeg.image_id == Image.id).join(Office, Image.office_id == Office.id).filter(
+    # 5. today_ai_seg: 医生今天创建的AI影像分割记录数（不按医院筛选）
+    today_ai_seg = db.session.query(func.count(ImageSeg.id)).join(Image, ImageSeg.image_id == Image.id).filter(
         ImageSeg.creator_id == doctor_id,
-        Office.hospital_id == hospital_id,
         func.date(ImageSeg.created_at) == today
     ).scalar()
 

@@ -1,6 +1,7 @@
 import json
 from flask import request, jsonify, Blueprint
-from models import db, Patient, Case, Image, AiAdvice
+from sqlalchemy.orm import joinedload
+from models import db, Patient, Case, Image, AiAdvice, Office
 import utils.jwtauth
 from utils.silicon_flow import silicon_flow_client
 
@@ -167,7 +168,12 @@ def list_patient_cases():
         return jsonify({'code': 404, 'message': '病人不存在'}), 404
     
     try:
+        # 使用 joinedload 预加载关联的 doctor 和 office.hospital 信息，避免 N+1 查询
         pagination = Case.query.filter_by(patient_id=patient_id) \
+            .options(
+                joinedload(Case.doctor),
+                joinedload(Case.office).joinedload(Office.hospital)
+            ) \
             .order_by(Case.created_at.desc()) \
             .paginate(page=page, per_page=per_page, error_out=False)
         
@@ -177,6 +183,7 @@ def list_patient_cases():
             case_data = case.to_dict()
             case_data['doctor_name'] = case.doctor.name if case.doctor else '未知'
             case_data['office_name'] = case.office.name if case.office else '未知'
+            case_data['hospital_name'] = case.office.hospital.name if case.office and case.office.hospital else '未知'
             data.append(case_data)
 
         return jsonify({

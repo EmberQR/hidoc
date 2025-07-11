@@ -2,7 +2,7 @@
   <div class="patient-mng-container">
     <div class="page-header">
       <h2 class="page-title">病人管理</h2>
-      <p class="page-description">我负责的病人的建档、病历记录、影像记录、AI诊断记录等</p>
+      <p class="page-description">我负责过的所有病人的病历记录、影像记录、AI诊断记录等。</p>
     </div>
 
     <el-table :data="patientList" v-loading="loading" style="width: 100%" stripe>

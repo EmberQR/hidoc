@@ -33,6 +33,7 @@
             <el-table :data="cases" stripe style="width: 100%" height="400">
               <el-table-column prop="case_date" label="就诊日期" width="120" />
               <el-table-column prop="doctor_name" label="主治医师" width="100" />
+              <el-table-column prop="hospital_name" label="就诊医院" width="120" />
               <el-table-column prop="office_name" label="就诊科室" width="120" />
               <el-table-column prop="diagnosis" label="诊断结果" show-overflow-tooltip />
               <el-table-column label="操作" width="90" fixed="right">

@@ -1,6 +1,7 @@
 import utils.jwtauth
 from flask import request, jsonify, Blueprint, make_response
 from sqlalchemy import distinct
+from sqlalchemy.orm import joinedload
 from models import db, Doctor, Office, DoctorOffice, DoctorHospital, Patient, Case, Image
 from datetime import datetime
 
@@ -413,7 +414,12 @@ def get_single_case():
     except ValueError:
         return jsonify({'code': 400, 'message': 'case_id 必须是整数'}), 400
 
-    case = Case.query.get(case_id)
+    case = Case.query.options(
+        joinedload(Case.patient),
+        joinedload(Case.doctor),
+        joinedload(Case.office).joinedload(Office.hospital)
+    ).filter(Case.id == case_id).first()
+
     if not case:
         return jsonify({'code': 404, 'message': '病历不存在'}), 404
 
@@ -462,6 +468,7 @@ def get_single_case():
     case_data['patient_name'] = case.patient.name
     case_data['doctor_name'] = case.doctor.name
     case_data['office_name'] = case.office.name
+    case_data['hospital_name'] = case.office.hospital.name if case.office and case.office.hospital else '未知'
     case_data['images'] = image_list
 
     return jsonify({

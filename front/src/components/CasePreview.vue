@@ -12,6 +12,7 @@
         </template>
         <el-descriptions-item label="就诊日期">{{ caseData.case_date }}</el-descriptions-item>
         <el-descriptions-item label="主治医师">{{ caseData.doctor_name }}</el-descriptions-item>
+        <el-descriptions-item label="就诊医院">{{ caseData.hospital_name }}</el-descriptions-item>
         <el-descriptions-item label="就诊科室">{{ caseData.office_name }}</el-descriptions-item>
         <el-descriptions-item label="更新时间">{{ caseData.updated_at }}</el-descriptions-item>
         

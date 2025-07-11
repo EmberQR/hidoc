@@ -1,7 +1,10 @@
 <template>
   <div class="image-mng-container">
     <div class="header">
-      <h2>我的影像</h2>
+      <div>
+        <h2>我的影像</h2>
+        <p class="page-description">我上传的所有影像。此处上传的影像不会与病历关联，如需关联病历，请在病历管理中上传影像。</p>
+      </div>
       <el-button type="primary" :icon="Plus" @click="handleAdd">上传影像</el-button>
     </div>
 
@@ -336,6 +339,11 @@ const submitAdd = () => {
 .header h2 {
     margin: 0;
     color: #303133;
+}
+.page-description {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 8px;
 }
 .el-table {
     border-radius: 4px;
